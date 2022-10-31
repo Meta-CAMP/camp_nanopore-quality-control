@@ -1,0 +1,246 @@
+'''Workflow for the CAMP Nanopore quality control module.'''
+
+
+from os.path import abspath, dirname, join
+import pandas as pd
+import shutil
+from utils import Workflow_Dirs, ingest_samples, write_step_seq_lens, sample_statistics
+
+
+# Load and/or make the working directory structure
+dirs = Workflow_Dirs(config['work_dir'], 'nanopore_preprocessing')
+
+
+# Load sample names and input files 
+SAMPLES = ingest_samples(config['samples'], dirs.TMP)
+
+
+# Specify the location of any external resources and scripts
+dirs_ext = join(dirname(abspath(__file__)), 'ext')
+dirs_scr = join(dirs_ext, 'scripts')
+
+
+# --- Workflow output --- #
+
+
+rule all:
+    input:
+        # expand(join(dirs.OUT, '3_summary', '{eval}_multiqc_report.html'), eval=['pre', 'post']),
+        expand(join(dirs.OUT, 'final_reports', '{eval}_multiqc_report.html'), eval=['pre', 'post']),
+        join(dirs.OUT, 'final_reports', 'read_stats.csv'),
+        join(dirs.OUT, 'final_reports', 'samples.csv')
+
+
+def workflow_mode(wildcards):
+    return output
+    
+
+# --- Workflow steps --- #
+
+
+rule trim_reads:
+    input:
+        join(dirs.TMP, '{sample}.fastq.gz')
+    output:
+        join(dirs.OUT, '0_trimmed', '{sample}.fastq.gz')
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    log:
+        join(dirs.LOG, 'trimming', '{sample}.out')
+    threads: config['trim_reads_threads']
+    resources:
+        mem_mb = config['trim_reads_mem_mb']
+    shell:
+        """
+        porechop --threads {threads} \
+                 -i {input} \
+                 -o {output} \
+                 > {log} 2>&1
+        """
+
+
+rule filter_lowqual_reads:
+    input:
+        join(dirs.OUT, '0_trimmed', '{sample}.fastq.gz')
+    output:
+        join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz')
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control_nanofilt.yaml')
+    log:
+        join(dirs.LOG, 'quality_filtering', '{sample}.out')
+    resources:
+        mem_mb = config['filter_lowqual_reads_mem_mb']
+    params:
+        quality = config['quality']
+    shell:
+        """
+        gunzip -c {input} | \
+        NanoFilt --quality {params.quality} \
+                 --logfile {log} | \
+        gzip -c - \
+        > {output}
+        """
+
+
+rule build_minimap2_index:
+    output:
+        f"{config['host_genome']}.mmi"
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    params:
+        reference = config['host_genome']
+    shell:
+        """
+        minimap2 -d {output} \
+                 {params.reference} 
+        """
+
+
+rule filter_host_reads:
+    input:
+        fastq = join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz'),
+        host_genome_index = f"{config['host_genome']}.mmi"
+    output:
+        join(dirs.OUT, '2_host_reads_removed', '{sample}.fastq.gz')
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    log:
+        join(dirs.LOG, 'host_reads_removal', '{sample}.out')
+    threads: config['filter_host_reads_threads']
+    resources:
+        mem_mb = config['filter_host_reads_mem_mb']
+    shell:
+        """
+        minimap2 -a \
+                 --secondary=no \
+                 -t {threads} \
+                 {input.host_genome_index} \
+                 {input.fastq} | \
+        samtools view -buSh \
+                      -f 4 \
+                      - | \
+        samtools fastq - | \
+        gzip -c \
+             - \
+        > {output}
+        """
+
+
+rule fastqc_pre:
+    input:
+        join(dirs.TMP, '{sample}.fastq.gz')
+    output:
+        join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.html'),
+        join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.zip')
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    params:
+        out_dir = join(dirs.OUT, '3_summary', 'fastqc_pre')
+    shell:
+        """
+        fastqc -o {params.out_dir} \
+               {input}
+        """
+
+
+rule fastqc_post:
+    input:
+        join(dirs.OUT, '2_host_reads_removed', '{sample}.fastq.gz')
+    output:
+        join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.html'),
+        join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.zip')
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    params:
+        out_dir = join(dirs.OUT, '3_summary', 'fastqc_post')
+    shell:
+        """
+        fastqc -o {params.out_dir} \
+               {input}
+        """
+
+
+rule multiqc:
+    input:
+        expand(join(dirs.OUT, '3_summary', 'fastqc_{eval}', '{sample}_fastqc.html'), eval=['pre', 'post'], sample=SAMPLES)
+    output:
+        join(dirs.OUT, '3_summary', '{eval}_multiqc_report.html')
+    conda:
+        join(config['env_yamls'], 'nanopore-quality-control_multiqc.yaml'),
+    params:
+        in_dir = join(dirs.OUT, '3_summary', 'fastqc_{eval}')
+    shell:
+        """
+        multiqc --force {params.in_dir} -n {output}
+        """
+
+
+rule init_statistics:
+    input:
+        join(dirs.TMP, '{sample}.fastq.gz')
+    output:
+        join(dirs.OUT, '{sample}_read_stats.csv')
+    # resources:
+    #     mem_mb = config['count_reads_mem_mb']
+    params:
+        sample = '{sample}'
+    run:
+        write_step_seq_lens(str(params.sample), '0_begin', str(input), str(output))
+
+
+rule step_statistics:
+    input:
+        lambda wildcards: expand(join(dirs.OUT, '{step}', '{sample}.fastq.gz'), step=wildcards.step, sample=wildcards.sample)
+    output:
+        join(dirs.OUT, '{step}', '{sample}_read_stats.csv')
+    # resources:
+    #     mem_mb = config['count_reads_mem_mb']
+    params:
+        sample = '{sample}',
+        step = '{step}'
+    run:
+        write_step_seq_lens(str(params.sample), str(params.step), str(input), str(output))
+
+
+rule sample_statistics:
+    input:
+        init = join(dirs.OUT, '{sample}' + '_read_stats.csv'),
+        step = lambda wildcards: expand(join(dirs.OUT, '{step}', '{sample}_read_stats.csv'), step=['0_trimmed', '1_quality_filtered', '2_host_reads_removed'], sample=wildcards.sample),
+    output:
+        join(dirs.OUT, '3_summary', '{sample}_read_stats.csv')
+    run:
+        sample_statistics([str(input.init)] + input.step, str(output))
+
+
+rule concat_statistics:
+    input:
+        expand(join(dirs.OUT, '3_summary', '{sample}_read_stats.csv'), sample=SAMPLES)
+    output:
+        join(dirs.OUT, 'final_reports', 'read_stats.csv')
+    shell:
+        """
+        echo -e "sample_name,step,num_reads,prop_init_reads,total_size,prop_init_size,mean_read_len" | cat - {input} > {output}
+        """
+
+
+rule make_config:
+    input:
+        mqc = expand(join(dirs.OUT, '3_summary', '{eval}_multiqc_report.html'), eval=['pre', 'post']),
+    output:
+        cfg = join(dirs.OUT, 'final_reports', 'samples.csv'),
+        pre = join(dirs.OUT, 'final_reports', 'pre_multiqc_report.html'),
+        post = join(dirs.OUT, 'final_reports', 'post_multiqc_report.html')
+    params: 
+        fastq_dir = join(dirs.OUT, '2_host_reads_removed'),
+        multiqc_dir = join(dirs.OUT, '3_summary'),
+        samples = SAMPLES
+    run:
+        shutil.copy(str(input.mqc[0]), str(output.pre))
+        shutil.copy(str(input.mqc[1]), str(output.post))
+
+        sample_df = pd.DataFrame(index=range(len(params.samples)), columns=['sample', 'nanopore_reads'])
+
+        for i, sample in enumerate(params.samples):
+            sample_df.loc[i, :] = (sample, join(params.fastq_dir, f"{sample}.fastq")) 
+
+        sample_df.to_csv(str(output.cfg), index=False)

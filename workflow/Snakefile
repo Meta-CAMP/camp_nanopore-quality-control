@@ -122,7 +122,8 @@ rule filter_host_reads:
         samtools fastq - | \
         gzip -c \
              - \
-        > {output}
+        1> {output}
+        2> {log}
         """
 
 

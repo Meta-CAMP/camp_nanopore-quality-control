@@ -181,8 +181,8 @@ rule init_statistics:
         join(dirs.TMP, '{sample}.fastq.gz')
     output:
         join(dirs.OUT, '{sample}_read_stats.csv')
-    # resources:
-    #     mem_mb = config['count_reads_mem_mb']
+    resources:
+        mem_mb = config['count_reads_mem_mb']
     params:
         sample = '{sample}'
     run:
@@ -194,8 +194,8 @@ rule step_statistics:
         lambda wildcards: expand(join(dirs.OUT, '{step}', '{sample}.fastq.gz'), step=wildcards.step, sample=wildcards.sample)
     output:
         join(dirs.OUT, '{step}', '{sample}_read_stats.csv')
-    # resources:
-    #     mem_mb = config['count_reads_mem_mb']
+    resources:
+        mem_mb = config['count_reads_mem_mb']
     params:
         sample = '{sample}',
         step = '{step}'

@@ -18,3 +18,6 @@ host_genome: /home/mike/Documents/grad_school/genomes/hg38.fa
 filter_host_reads_mem_mb: 40000
 filter_host_reads_threads: 10
 
+# --- statistics --- #
+
+count_reads_mem_mb: 40000

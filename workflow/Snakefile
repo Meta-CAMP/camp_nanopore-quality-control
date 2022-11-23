@@ -65,7 +65,7 @@ rule filter_lowqual_reads:
     output:
         join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz')
     conda:
-        join(config['env_yamls'], 'nanopore-quality-control_nanofilt.yaml')
+        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     log:
         join(dirs.LOG, 'quality_filtering', '{sample}.out')
     resources:
@@ -74,11 +74,7 @@ rule filter_lowqual_reads:
         quality = config['quality']
     shell:
         """
-        gunzip -c {input} | \
-        NanoFilt --quality {params.quality} \
-                 --logfile {log} | \
-        gzip -c - \
-        > {output}
+        gunzip -c {input} | NanoFilt --quality {params.quality} --logfile {log}  | gzip -c - > {output}
         """
 
 
@@ -135,11 +131,14 @@ rule fastqc_pre:
         join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.zip')
     conda:
         join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    threads:
+        config['fastqc_threads']
     params:
         out_dir = join(dirs.OUT, '3_summary', 'fastqc_pre')
     shell:
         """
-        fastqc -o {params.out_dir} \
+        fastqc -t {threads} \
+               -o {params.out_dir} \
                {input}
         """
 
@@ -152,11 +151,14 @@ rule fastqc_post:
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.zip')
     conda:
         join(config['env_yamls'], 'nanopore-quality-control.yaml')
+    threads:
+        config['fastqc_threads']
     params:
         out_dir = join(dirs.OUT, '3_summary', 'fastqc_post')
     shell:
         """
-        fastqc -o {params.out_dir} \
+        fastqc -t {threads} \
+               -o {params.out_dir} \
                {input}
         """
 

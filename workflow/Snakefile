@@ -25,7 +25,6 @@ dirs_scr = join(dirs_ext, 'scripts')
 
 rule all:
     input:
-        # expand(join(dirs.OUT, '3_summary', '{eval}_multiqc_report.html'), eval=['pre', 'post']),
         expand(join(dirs.OUT, 'final_reports', '{eval}_multiqc_report.html'), eval=['pre', 'post']),
         join(dirs.OUT, 'final_reports', 'read_stats.csv'),
         join(dirs.OUT, 'final_reports', 'samples.csv')

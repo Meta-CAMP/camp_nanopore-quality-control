@@ -36,7 +36,7 @@ Installation
 3. Make sure the installed pipeline works correctly. ``pytest`` only generates temporary outputs so no files should be created.
 ::
     cd camp_nanopore-quality-control
-    conda create -f configs/conda/nanopore-quality-control.yaml
+    conda env create -f configs/conda/nanopore-quality-control.yaml
     conda activate nanopore-quality-control
     pytest .tests/unit/
 

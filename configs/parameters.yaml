@@ -16,7 +16,7 @@ quality: 0
 
 # --- filter_host_reads --- #
 
-host_genome: /home/jmt4002/genomes/hg38/hg38.fa 
+host_genome: <INSERT_PATH_TO_REFERENCE>
 filter_host_reads_mem_mb: 40000 
 filter_host_reads_threads: 40
 

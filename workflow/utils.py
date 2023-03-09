@@ -41,13 +41,16 @@ def ingest_samples(samples, tmp):
 
     sample_df = pd.read_csv(samples, header=0, index_col=0)  # name, fastq
 
+    file_abs_path = os.path.abspath(samples)
+    folder_path = os.path.dirname(file_abs_path)
+
     # Remove existing fastq symlinks
     for fastq_file in os.listdir(tmp):
         os.remove(join(tmp, fastq_file))
 
     # Build symlinks to input fastq files and place them in input tmp dir
     for sample_name, row in sample_df.iterrows():
-        symlink(abspath(row['fastq']), join(tmp, f"{sample_name}.fastq.gz"))
+        symlink(abspath(join(folder_path, row['fastq'])), join(tmp, f"{sample_name}.fastq.gz"))
 
     return list(sample_df.index.values)  # return the sample names
 

@@ -4,6 +4,7 @@ channels:
 - bioconda
 dependencies:
 - fastqc=0.11.9=hdfd78af_1
+- click-default-group=1.2.4=pyhd8ed1ab_0
 - htslib=1.16=h6bc39ce_0
 - k8=0.2.5=hd03093a_2
 - minimap2=2.24=h7132678_1

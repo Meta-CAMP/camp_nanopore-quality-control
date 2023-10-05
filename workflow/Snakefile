@@ -20,6 +20,26 @@ dirs_ext = join(dirname(abspath(__file__)), 'ext')
 dirs_scr = join(dirs_ext, 'scripts')
 
 
+# Optional rules management
+
+## 1) Host read filtering
+
+STEPS = ['0_trimmed', '1_quality_filtered']
+if config['use_host_filter']:
+    STEPS.append('2_host_reads_removed')
+
+def workflow_mode_reads(wildcards):
+    if config['use_host_filter']:
+        return join(dirs.OUT, '2_host_reads_removed', '{sample}.fastq.gz')
+    else:
+        return join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz')
+
+def workflow_mode_reads_param():
+    if config['use_host_filter']:
+        return join(dirs.OUT, '2_host_reads_removed')
+    else:
+        return join(dirs.OUT, '1_quality_filtered')
+
 # --- Workflow output --- #
 
 
@@ -27,7 +47,9 @@ rule all:
     input:
         expand(join(dirs.OUT, 'final_reports', '{eval}_multiqc_report.html'), eval=['pre', 'post']),
         join(dirs.OUT, 'final_reports', 'read_stats.csv'),
-        join(dirs.OUT, 'final_reports', 'samples.csv')
+        join(dirs.OUT, 'final_reports', 'samples.csv'),
+        expand(join(dirs.OUT, 'final_reports', '{sample}_post_quality_scores.tsv'), sample=SAMPLES),
+        expand(join(dirs.OUT, '{sample}_pre_quality_scores.tsv'), sample=SAMPLES)
 
 
 def workflow_mode(wildcards):
@@ -144,7 +166,7 @@ rule fastqc_pre:
 
 rule fastqc_post:
     input:
-        join(dirs.OUT, '2_host_reads_removed', '{sample}.fastq.gz')
+        workflow_mode_reads,
     output:
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.html'),
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.zip')
@@ -203,11 +225,34 @@ rule step_statistics:
     run:
         write_step_seq_lens(str(params.sample), str(params.step), str(input), str(output))
 
+rule pre_quality_scores:
+    input:
+        join(dirs.TMP, '{sample}.fastq.gz')
+    output:
+        join(dirs.OUT,'{sample}_pre_quality_scores.tsv')
+    resources:
+        mem_mb = config['count_reads_mem_mb']
+    shell:
+        """
+        python3  camp_nanopore-quality-control/workflow/ext/quality_scoring.py -i {input} -o {output}
+        """
+
+rule post_quality_scores:
+    input:
+        workflow_mode_reads,
+    output:
+        join(dirs.OUT,'final_reports', '{sample}_post_quality_scores.tsv')
+    resources:
+        mem_mb = config['count_reads_mem_mb']
+    shell:
+        """
+        python3 camp_nanopore-quality-control/workflow/ext/quality_scoring.py -i {input} -o {output}
+        """
 
 rule sample_statistics:
     input:
         init = join(dirs.OUT, '{sample}' + '_read_stats.csv'),
-        step = lambda wildcards: expand(join(dirs.OUT, '{step}', '{sample}_read_stats.csv'), step=['0_trimmed', '1_quality_filtered', '2_host_reads_removed'], sample=wildcards.sample),
+        step = lambda wildcards: expand(join(dirs.OUT, '{step}', '{sample}_read_stats.csv'), step=STEPS, sample=wildcards.sample),
     output:
         join(dirs.OUT, '3_summary', '{sample}_read_stats.csv')
     run:
@@ -233,7 +278,7 @@ rule make_config:
         pre = join(dirs.OUT, 'final_reports', 'pre_multiqc_report.html'),
         post = join(dirs.OUT, 'final_reports', 'post_multiqc_report.html')
     params: 
-        fastq_dir = join(dirs.OUT, '2_host_reads_removed'),
+        fastq_dir = workflow_mode_reads_param(),
         multiqc_dir = join(dirs.OUT, '3_summary'),
         samples = SAMPLES
     run:

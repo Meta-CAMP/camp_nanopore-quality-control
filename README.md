@@ -1,5 +1,5 @@
 
-# CAMP Nanopore quality control
+# CAMP Nanopore Quality Control
 
 [![Documentation Status](https://readthedocs.org/projects/camp-nanopore-quality-control/badge/?version=latest)](https://camp-nanopore-quality-control.readthedocs.io/en/latest/?version=latest)
 
@@ -21,9 +21,10 @@ The CAMP Nanopore quality control module performs initial QC on raw input reads,
 1.  Make sure the installed pipeline works correctly. `pytest` only generates temporary outputs so no files should be created. 
 
 ```
-cd camp_nanopore-quality-control conda env create -f
-configs/conda/nanopore-quality-control.yaml conda activate
-nanopore-quality-control pytest .tests/unit/
+cd camp_nanopore-quality-control
+conda env create -f configs/conda/nanopore-quality-control.yaml
+conda activate nanopore-quality-control
+pytest .tests/unit/
 ```
 
 ## Using the Module

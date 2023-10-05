@@ -12,12 +12,12 @@ trim_reads_threads: 40
 # --- filter_lowqual_reads --- #
 
 filter_lowqual_reads_mem_mb: 40000 
-quality: 8
+quality: 0
 
 # --- filter_host_reads --- #
 
-use_host_filter: False
-host_genome: /home/bet4006/camp/GRCh38_28122022/GRCh38.fna
+use_host_filter: True
+host_genome: <INSERT_PATH_TO_REFERENCE>
 filter_host_reads_mem_mb: 40000 
 filter_host_reads_threads: 40
 

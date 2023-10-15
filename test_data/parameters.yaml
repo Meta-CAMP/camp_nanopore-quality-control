@@ -1,0 +1,11 @@
+#'''Parameters'''#
+
+# --- filter_lowqual_reads --- #
+
+quality: 8
+
+# --- filter_host_reads --- #
+
+use_host_filter: True
+host_genome: <INSERT_PATH_TO_REFERENCE>
+

@@ -1,3 +1,2 @@
 name,fastq
-test_1000,../test_data/SRR11861906_1000.fastq.gz
-test_2000,../test_data/SRR11861906_2000.fastq.gz
+sample_name, path/to/data/uhgg.fastq.gz

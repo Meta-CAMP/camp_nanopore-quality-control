@@ -1,20 +1,23 @@
 #'''Command-line usage resource config.'''#
 
+# --- general --- #
 
-# --- sample_rule --- #
+fastqc_threads: 40
 
-sample_rule_threads: 10
-sample_rule_mem_mb: 100000
+# --- trim_reads --- #
 
+trim_reads_mem_mb: 40000
+trim_reads_threads: 40
 
-# --- first_rule --- #
+# --- filter_lowqual_reads --- #
 
-first_rule_threads: 5
-first_rule_mem_mb: 20000
+filter_lowqual_reads_mem_mb: 40000 
 
+# --- filter_host_reads --- #
 
-# --- second_rule --- #
+filter_host_reads_mem_mb: 40000 
+filter_host_reads_threads: 40
 
-python_rule_threads: 20
-python_rule_mem_mb: 80000
+# --- statistics --- #
 
+count_reads_mem_mb: 40000 

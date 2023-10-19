@@ -2,12 +2,12 @@
 
 # --- general --- #
 
-fastqc_threads: 40
+fastqc_threads: 10
 
 # --- trim_reads --- #
 
 trim_reads_mem_mb: 40000
-trim_reads_threads: 40
+trim_reads_threads: 10
 
 # --- filter_lowqual_reads --- #
 
@@ -16,7 +16,7 @@ filter_lowqual_reads_mem_mb: 40000
 # --- filter_host_reads --- #
 
 filter_host_reads_mem_mb: 40000 
-filter_host_reads_threads: 40
+filter_host_reads_threads: 10
 
 # --- statistics --- #
 

@@ -64,8 +64,6 @@ rule trim_reads:
         join(dirs.TMP, '{sample}.fastq.gz')
     output:
         join(dirs.OUT, '0_trimmed', '{sample}.fastq.gz')
-    conda:
-        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     log:
         join(dirs.LOG, 'trimming', '{sample}.out')
     threads: config['trim_reads_threads']
@@ -85,8 +83,6 @@ rule filter_lowqual_reads:
         join(dirs.OUT, '0_trimmed', '{sample}.fastq.gz')
     output:
         join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz')
-    conda:
-        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     log:
         join(dirs.LOG, 'quality_filtering', '{sample}.out')
     resources:
@@ -102,8 +98,6 @@ rule filter_lowqual_reads:
 rule build_minimap2_index:
     output:
         f"{config['host_genome']}.mmi"
-    conda:
-        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     params:
         reference = config['host_genome']
     shell:
@@ -119,8 +113,6 @@ rule filter_host_reads:
         host_genome_index = f"{config['host_genome']}.mmi"
     output:
         join(dirs.OUT, '2_host_reads_removed', '{sample}.fastq.gz')
-    conda:
-        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     log:
         join(dirs.LOG, 'host_reads_removal', '{sample}.out')
     threads: config['filter_host_reads_threads']
@@ -150,8 +142,6 @@ rule fastqc_pre:
     output:
         join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.html'),
         join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.zip')
-    conda:
-        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     threads:
         config['fastqc_threads']
     params:
@@ -170,8 +160,6 @@ rule fastqc_post:
     output:
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.html'),
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.zip')
-    conda:
-        join(config['env_yamls'], 'nanopore-quality-control.yaml')
     threads:
         config['fastqc_threads']
     params:

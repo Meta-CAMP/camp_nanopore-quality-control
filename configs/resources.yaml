@@ -2,7 +2,7 @@
 
 # --- general --- #
 
-fastqc_threads: 40
+fastqc_threads: 500
 
 # --- trim_reads --- #
 

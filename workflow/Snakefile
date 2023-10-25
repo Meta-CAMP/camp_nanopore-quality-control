@@ -276,6 +276,6 @@ rule make_config:
         sample_df = pd.DataFrame(index=range(len(params.samples)), columns=['sample', 'nanopore_reads'])
 
         for i, sample in enumerate(params.samples):
-            sample_df.loc[i, :] = (sample, join(params.fastq_dir, f"{sample}.fastq")) 
+            sample_df.loc[i, :] = (sample, join(params.fastq_dir, f"{sample}.fastq.gz")) 
 
         sample_df.to_csv(str(output.cfg), index=False)

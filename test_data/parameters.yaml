@@ -1,5 +1,9 @@
 #'''Parameters'''#
 
+# --- general --- #
+
+external_scripts: '/path/to/workflow/ext'
+
 # --- filter_lowqual_reads --- #
 
 quality: 8

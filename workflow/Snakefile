@@ -220,9 +220,11 @@ rule pre_quality_scores:
         join(dirs.OUT,'{sample}_pre_quality_scores.tsv')
     resources:
         mem_mb = config['count_reads_mem_mb']
+    params:
+        ext = config['external_scripts']
     shell:
         """
-        python3  camp_nanopore-quality-control/workflow/ext/quality_scoring.py -i {input} -o {output}
+        python3 {params.ext}/quality_scoring.py -i {input} -o {output}
         """
 
 rule post_quality_scores:
@@ -232,9 +234,11 @@ rule post_quality_scores:
         join(dirs.OUT,'final_reports', '{sample}_post_quality_scores.tsv')
     resources:
         mem_mb = config['count_reads_mem_mb']
+    params:
+        ext = config['external_scripts']
     shell:
         """
-        python3 camp_nanopore-quality-control/workflow/ext/quality_scoring.py -i {input} -o {output}
+        python3 {params.ext}/quality_scoring.py -i {input} -o {output}
         """
 
 rule sample_statistics:

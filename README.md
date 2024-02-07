@@ -1,9 +1,8 @@
+# Nanopore Long-Read Quality Control
 
-# CAMP Nanopore Quality Control
+[![Documentation Status](https://img.shields.io/badge/docs-unknown-yellow.svg)]() ![image](https://img.shields.io/badge/version-0.1.0-brightgreen)
 
-[![Documentation Status](https://readthedocs.org/projects/camp-nanopore-quality-control/badge/?version=latest)](https://camp-nanopore-quality-control.readthedocs.io/en/latest/?version=latest)
-
-![image](https://img.shields.io/badge/version-0.1.0-brightgreen)
+<!-- [![Documentation Status](https://readthedocs.org/projects/camp-nanopore-quality-control/badge/?version=latest)](https://camp-nanopore-quality-control.readthedocs.io/en/latest/?version=latest) -->
 
 ## Overview
 

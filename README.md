@@ -8,22 +8,59 @@
 
 This module is designed to function as both a standalone MAG Nanopore quality control pipeline as well as a component of the larger CAMP metagenome analysis pipeline. As such, it is both self-contained (ex. instructions included for the setup of a versioned environment, etc.), and seamlessly compatible with other CAMP modules (ex. ingests and spawns standardized input/output config files, etc.).
 
-The CAMP Nanopore quality control module performs initial QC on raw input reads, including read trimming, read filtering, and removal of human reads.
-
-<!-- Add longer description of your workflow's algorithmic contents -->
+The CAMP Nanopore quality control module performs initial QC on raw input reads, including read trimming, read filtering, and removal of host reads.
 
 ## Installation
 
-1.  Clone repo from [Github](https://github.com/MetaSUB-CAMP/camp_nanopore-quality-control).
-2.  Set up the conda environment using `configs/conda/nanopore-quality-control.yaml`.
+> [!TIP]
+> All databases used in CAMP modules will also be available for download on Zenodo (link TBD).
 
-1.  Make sure the installed pipeline works correctly. `pytest` only generates temporary outputs so no files should be created. 
+### Install `conda`
 
+If you don't already have `conda` handy, we recommend installing `miniforge`, which is a minimal conda installer that, by default, installs packages from open-source community-driven channels such as `conda-forge`.
+```Bash
+# If you don't already have conda on your system...
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
 ```
+
+Run the following command to initialize Conda for your shell. This will configure your shell to recognize conda activate. 
+```Bash
+conda init
+```
+
+Restart your terminal or run:
+```Bash
+source ~/.bashrc  # For bash users
+source ~/.zshrc   # For zsh users
+```
+### Setting up the Nanopore Long-Read QC Module
+
+1.  Clone repo from [Github](https://github.com/Meta-CAMP/camp_nanopore-quality-control).
+
+2. Set up the conda environment (contains Snakemake, Click, and other essentials) using `configs/conda/nanopore-quality-control.yaml`. 
+```Bash
+# Create and activate conda environment 
 cd camp_nanopore-quality-control
 conda env create -f configs/conda/nanopore-quality-control.yaml
-conda activate nanopore-quality-control
-pytest .tests/unit/
+conda activate nanopore_quality_control
+```
+
+3. Set up the rest of the module interactively by running `setup.sh`. This step downloads the host reference genome (if host read removal is reuiqred) and installs the other conda environments needed for running the module. This is done interactively by running `setup.sh`. `setup.sh` also generates `parameters.yaml` based on user input paths for running this module.
+```Bash
+source setup.sh
+
+# If you encounter issues where conda activate is not recognized, follow these steps to properly initialize Conda
+conda init
+source ~/.bashrc # or source ~/.zshrc
+```
+
+4. Make sure the installed pipeline works correctly. 
+<!--- 
+Add runtime information of the module on the test dataset here. For example: With X threads and a maximum of Y GB allocated, the dataset should finish in approximately Z minutes.
+--->
+```Bash
+# Run tests on the included sample dataset
+python /path/to/camp_nanopore-quality-control/workflow/nanopore-quality-control.py test
 ```
 
 ## Using the Module

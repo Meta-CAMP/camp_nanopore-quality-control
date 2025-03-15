@@ -1,4 +1,4 @@
-name: nanopore-quality-control_multiqc
+name: multiqc
 channels:
 - conda-forge
 - bioconda
@@ -99,5 +99,4 @@ dependencies:
 - yaml=0.2.5=h7f98852_2
 - zipp=3.10.0=pyhd8ed1ab_0
 - zstd=1.5.2=h6239696_4
-prefix: /home/jmt4002/.conda/envs/nanopore-quality-control_multiqc
 

@@ -2,14 +2,16 @@
 
 # --- general --- #
 
-external_scripts: '/path/to/workflow/ext'
+ext: ''
+conda_prefix:   ''
+
 
 # --- filter_lowqual_reads --- #
 
-quality: 8
+quality:        8
+
 
 # --- filter_host_reads --- #
 
-use_host_filter: True
-host_genome: <INSERT_PATH_TO_REFERENCE>
-
+use_host_filter: False
+host_genome:    ''

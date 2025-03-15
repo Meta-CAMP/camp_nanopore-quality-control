@@ -91,7 +91,7 @@ rule filter_lowqual_reads:
         quality = config['quality']
     shell:
         """
-        gunzip -c {input} | NanoFilt --quality {params.quality} --logfile {log}  | gzip -c - > {output}
+        gunzip -c {input} | chopper --quality {params.quality} --logfile {log}  | gzip -c - > {output}
         """
 
 
@@ -178,7 +178,7 @@ rule multiqc:
     output:
         join(dirs.OUT, '3_summary', '{eval}_multiqc_report.html')
     conda:
-        join(config['env_yamls'], 'nanopore-quality-control_multiqc.yaml'),
+        'multiqc',
     params:
         in_dir = join(dirs.OUT, '3_summary', 'fastqc_{eval}')
     shell:

@@ -1,2 +1,2 @@
-name,fastq
-uhgg, path/to/data/uhgg.fastq.gz
+sample_name,fastq
+uhgg,/path/to/data/uhgg.fastq.gz

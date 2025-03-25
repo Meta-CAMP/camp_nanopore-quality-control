@@ -36,6 +36,9 @@ source ~/.zshrc   # For zsh users
 ### Setting up the Nanopore Long-Read QC Module
 
 1.  Clone repo from [Github](https://github.com/Meta-CAMP/camp_nanopore-quality-control).
+```Bash
+git clone https://github.com/Meta-CAMP/camp_nanopore-quality-control
+```
 
 2. Set up the conda environment (contains Snakemake, Click, and other essentials) using `configs/conda/nanopore-quality-control.yaml`. 
 ```Bash

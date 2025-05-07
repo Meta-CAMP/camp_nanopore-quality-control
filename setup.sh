@@ -59,23 +59,31 @@ show_welcome() {
 
 }
 
+# Check to see if the base CAMP environment has already been installed 
+find_install_camp_env() {
+    if conda env list | grep -q "$DEFAULT_CONDA_ENV_DIR/camp"; then 
+        echo "✅ The main CAMP environment is already installed in $DEFAULT_CONDA_ENV_DIR."
+    else
+        echo "🚀 Installing the main CAMP environment in $DEFAULT_CONDA_ENV_DIR/..."
+        conda create --prefix "$DEFAULT_CONDA_ENV_DIR/camp" -c conda-forge -c bioconda biopython blast bowtie2 bumpversion click click-default-group cookiecutter jupyter matplotlib numpy pandas samtools scikit-learn scipy seaborn snakemake umap-learn upsetplot
+        echo "✅ The main CAMP environment has been installed successfully!"
+    fi
+}
+
 # Check to see if the required conda environments have already been installed 
 find_install_conda_env() {
-    check_conda_env=$(conda env list | awk '{print $NF}' | grep -qx "$DEFAULT_CONDA_ENV_DIR/$1")
-    if check_conda_env; then
-        echo "✅ $2 environment is already installed in $DEFAULT_CONDA_ENV_DIR."
+    if conda env list | grep -q "$DEFAULT_CONDA_ENV_DIR/$1"; then
+        echo "✅ The $1 environment is already installed in $DEFAULT_CONDA_ENV_DIR."
     else
-        echo "🚀 Installing $2 in $DEFAULT_CONDA_ENV_DIR/$1..."
-        conda env create --file configs/conda/$1.yaml --prefix "$DEFAULT_CONDA_ENV_DIR/$1"
-        echo "✅ $2 installed successfully!"
-    fi
+        echo "🚀 Installing $1 in $DEFAULT_CONDA_ENV_DIR/$1..."
+        conda create --prefix $DEFAULT_CONDA_ENV_DIR/$1 -c conda-forge -c bioconda $1
+        echo "✅ $1 installed successfully!"
 }
 
 # Ask user if each database is already installed or needs to be installed
 ask_database() {
     local DB_NAME="$1"
     local DB_VAR_NAME="$2"
-    local DB_HINT="$3"
     local DB_PATH=""
 
     echo "🛠️  Checking for $DB_NAME database..."
@@ -85,7 +93,7 @@ ask_database() {
         case "$RESPONSE" in
             [Yy]* )
                 while true; do
-                    read -p "📂 Enter the path to your existing $DB_NAME database (eg. $DB_HINT): " DB_PATH
+                    read -p "📂 Enter the path to your existing $DB_NAME database (eg. /path/to/database_storage): " DB_PATH
                     if [[ -d "$DB_PATH" || -f "$DB_PATH" ]]; then
                         DATABASE_PATHS[$DB_VAR_NAME]="$DB_PATH"
                         echo "✅ $DB_NAME path set to: $DB_PATH"
@@ -155,9 +163,14 @@ echo "Working directory set to: $SETUP_WORK_DIR"
 # --- Install conda environments ---
 
 cd $MODULE_WORK_DIR
-DEFAULT_CONDA_ENV_DIR=$(conda env list | grep nanopore-quality-control | awk '{print $NF}' | sed 's|/nanopore-quality-control||')
+DEFAULT_CONDA_ENV_DIR=$(conda info --base)/envs
 
-# Find or install all auxiliary conda environments
+# Find or install...
+
+# ...module environment
+find_install_camp_env
+
+# ...auxiliary environments
 find_install_conda_env "multiqc" "MultiQC"
 
 # --- Download databases ---

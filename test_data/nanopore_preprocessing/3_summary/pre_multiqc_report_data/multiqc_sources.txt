@@ -1,2 +1,0 @@
-Module	Section	Sample Name	Source
-FastQC	all_sections	uhgg	/home/bet4006/camp/10_14_bugfix/nanopore_preprocessing/3_summary/fastqc_pre/uhgg_fastqc.zip

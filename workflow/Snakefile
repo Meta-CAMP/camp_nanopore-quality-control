@@ -16,7 +16,7 @@ SAMPLES = ingest_samples(config['samples'], dirs.TMP)
 
 
 # Specify the location of any external resources and scripts
-dirs_ext = join(dirname(abspath(__file__)), 'ext')
+dirs_ext = config['ext']
 dirs_scr = join(dirs_ext, 'scripts')
 
 

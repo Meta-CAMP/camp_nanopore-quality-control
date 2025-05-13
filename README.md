@@ -1,8 +1,9 @@
 # Nanopore Long-Read Quality Control
 
-[![Documentation Status](https://img.shields.io/badge/docs-unknown-yellow.svg)]() ![image](https://img.shields.io/badge/version-0.1.0-brightgreen)
+![image](https://img.shields.io/badge/version-0.3.0-brightgreen)
 
 <!-- [![Documentation Status](https://readthedocs.org/projects/camp-nanopore-quality-control/badge/?version=latest)](https://camp-nanopore-quality-control.readthedocs.io/en/latest/?version=latest) -->
+<!-- [![Documentation Status](https://img.shields.io/badge/docs-unknown-yellow.svg)]() -->
 
 ## Overview
 
@@ -42,6 +43,7 @@ git clone https://github.com/Meta-CAMP/camp_nanopore-quality-control
 
 2. Set up the rest of the module interactively by running `setup.sh`. This step downloads the host reference genome (if host read removal is reuiqred) and installs the other conda environments needed for running the module. This is done interactively by running `setup.sh`. `setup.sh` also generates `parameters.yaml` based on user input paths for running this module.
 ```Bash
+cd camp_nanopore-quality-control/
 source setup.sh
 
 # If you encounter issues where conda activate is not recognized, follow these steps to properly initialize Conda

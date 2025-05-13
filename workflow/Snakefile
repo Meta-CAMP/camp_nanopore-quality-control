@@ -97,9 +97,9 @@ rule filter_lowqual_reads:
 
 rule build_minimap2_index:
     output:
-        f"{config['host_genome']}.mmi"
+        f"{config['host_ref_genome']}.mmi"
     params:
-        reference = config['host_genome']
+        reference = config['host_ref_genome']
     shell:
         """
         minimap2 -d {output} \

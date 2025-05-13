@@ -65,7 +65,7 @@ find_install_camp_env() {
         echo "✅ The main CAMP environment is already installed in $DEFAULT_CONDA_ENV_DIR."
     else
         echo "🚀 Installing the main CAMP environment in $DEFAULT_CONDA_ENV_DIR/..."
-        conda create --prefix "$DEFAULT_CONDA_ENV_DIR/camp" -c conda-forge -c bioconda biopython blast bowtie2 bumpversion click click-default-group cookiecutter jupyter matplotlib numpy pandas samtools scikit-learn scipy seaborn snakemake umap-learn upsetplot
+        conda create --prefix "$DEFAULT_CONDA_ENV_DIR/camp" -c conda-forge -c bioconda biopython blast bowtie2 bumpversion click click-default-group cookiecutter jupyter matplotlib numpy pandas samtools scikit-learn scipy seaborn snakemake=7.32.4 umap-learn upsetplot
         echo "✅ The main CAMP environment has been installed successfully!"
     fi
 }
@@ -90,7 +90,7 @@ ask_database() {
     echo "🛠️  Checking for $DB_NAME database..."
 
     while true; do
-        read -p "❓ Do you already have $DB_NAME installed? (y/n): " RESPONSE
+        read -p "❓ Do you already have the $DB_NAME database installed? (y/n): " RESPONSE
         case "$RESPONSE" in
             [Yy]* )
                 while true; do
@@ -107,18 +107,20 @@ ask_database() {
                         fi
                     fi
                 done
-                if [[ "$RETRY" == "i" ]]; then
-                    break  # Exit outer loop to install the database
-                fi
+                        if [[ "$RETRY" == "i" ]]; then
+                            break  # Exit outer loop to start installation
+                        fi
+                    fi
+                done
                 ;;
             [Nn]* )
-                read -p "📂 Enter the directory where you want to install $DB_NAME: " DB_PATH
-                install_database "$DB_NAME" "$DB_VAR_NAME" "$DB_PATH"
-                return  # Exit function after installation
-                ;;
+                break # Exit outer loop to start installation
+                ;; 
             * ) echo "⚠️ Please enter 'y(es)' or 'n(o)'.";;
         esac
     done
+    read -p "📂 Enter the directory where you want to install $DB_NAME: " DB_PATH
+    install_database "$DB_NAME" "$DB_VAR_NAME" "$DB_PATH"
 }
 
 # Install databases in the specified directory
@@ -274,8 +276,8 @@ quality:        '$LOW_QUAL_THRESHOLD'
 
 # --- filter_host_reads --- #
 
-use_host_filter: False
-host_genome:    ''
+use_host_filter:    '$HOST_FILTER'
+host_ref_genome:    '$HOST_GENOME_LOCATION'
 EOL
 
 echo "✅ Test data configuration file created at: $PARAMS_FILE"
@@ -299,8 +301,8 @@ quality:        $LOW_QUAL_THRESHOLD
 
 # --- filter_host_reads --- #
 
-use_host_filter: $HOST_FILTER
-host_genome:    '$HOST_GENOME_LOCATION'
+use_host_filter:    '$HOST_FILTER'
+host_ref_genome:    '$HOST_GENOME_LOCATION'
 EOL
 
 echo "✅ Default configuration file created at: $PARAMS_FILE"
@@ -320,5 +322,5 @@ EOL
 
 echo "✅ Test data input CSV created at: $INPUT_CSV"
 
-echo "🎯 Setup complete! You can now test the workflow using `python $MODULE_WORK_DIR/workflow/nanopore-quality-control.py test`"
+echo "🎯 Setup complete! You can now test the workflow using \`python $MODULE_WORK_DIR/workflow/nanopore-quality-control.py test\`"
 

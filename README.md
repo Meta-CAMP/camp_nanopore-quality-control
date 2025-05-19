@@ -1,6 +1,6 @@
 # Nanopore Long-Read Quality Control
 
-![image](https://img.shields.io/badge/version-0.3.0-brightgreen)
+![image](https://img.shields.io/badge/version-0.4.0-brightgreen)
 
 <!-- [![Documentation Status](https://readthedocs.org/projects/camp-nanopore-quality-control/badge/?version=latest)](https://camp-nanopore-quality-control.readthedocs.io/en/latest/?version=latest) -->
 <!-- [![Documentation Status](https://img.shields.io/badge/docs-unknown-yellow.svg)]() -->
@@ -51,10 +51,7 @@ conda init
 source ~/.bashrc # or source ~/.zshrc
 ```
 
-4. Make sure the installed pipeline works correctly. 
-<!--- 
-Add runtime information of the module on the test dataset here. For example: With X threads and a maximum of Y GB allocated, the dataset should finish in approximately Z minutes.
---->
+4. Make sure the installed pipeline works correctly. With 10 threads and a maximum of 40 GB allocated overall, the test dataset should finish in approximately 3 minutes.
 ```Bash
 # Run tests on the included sample dataset
 conda activate camp

@@ -6,9 +6,8 @@
 .snakemake/
 
 # Testing
-checkm2/
 test_out/
-mag_qc.out
+nanopore-quality-control.out
 
 # workflow/
 workflow/.Rapp.history

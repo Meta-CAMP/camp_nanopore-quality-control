@@ -170,71 +170,102 @@ DEFAULT_CONDA_ENV_DIR=$(conda info --base)/envs
 find_install_camp_env
 
 # ...auxiliary environments
-find_install_conda_env "multiqc" "MultiQC"
+MODULE_PKGS=('porechop' 'chopper' 'minimap2' 'fastqc' 'multiqc') # Add any additional conda packages here
+for m in "${MODULE_PKGS[@]}"; do
+    find_install_conda_env "$m"
+done
+
+find_install_conda_env "" "MultiQC"
 
 # --- Download databases ---
 
-# Default database locations relative to $INSTALL_DIR
-declare -A DB_SUBDIRS=(
-    ["HOST_REF_PATH"]=""
-)
+# Download databses and index 
+download_and_index() {
+    GENOME_NAME=$1
+    DOWNLOAD_URL=$2
+    FILE_NAME=$3
+    INDEX_NAME=$4
+    INSTALL_PATH=$5
 
-# Absolute database paths (to be set in install_database)
-declare -A DATABASE_PATHS
+    # Create a dedicated directory inside the provided install path
+    GENOME_DIR="$INSTALL_PATH"
+    mkdir -p "$GENOME_DIR"
 
-# Ask for host reference genome, if necessary
-read -p "❓ Would you like to remove host reads? (y/n): " REMOVE_RESPONSE
-case "$REMOVE_RESPONSE" in
-    [Yy]* )
-        HOST_FILTER="True"
-        while true; do
-            read -p "❓ Have you already downloaded your host's reference genome? (y/n): " DOWNLOAD_RESPONSE
-            case "$DOWNLOAD_RESPONSE" in
-                [Yy]* )
-                    while true; do
-                        read -p "📂 Enter the path to your host's reference genome: " HOST_REF_PATH
-                        if [[ -d "$HOST_REF_PATH" || -f "$HOST_REF_PATH" ]]; then
-                            DATABASE_PATHS["HOST_REF_PATH"]="$HOST_REF_PATH"
-                            echo "✅ Host reference path set to: $HOST_REF_PATH"
-                            break  # Exit inner loop after successful input
-                        else
-                            echo "⚠️ The provided path does not exist or is empty. Please check and try again."
-                        fi
-                    done
-                    break  # Exit outer loop after successful input
-                    ;;
-                [Nn]* )
-                    read -p "📂 Enter the directory where you want to download the host's reference genome: " HOST_REF_DIR
-                    read -p "🌐 Enter the FTP site where you can download the host's reference genome from: " HOST_FTP_SITE
-                    if [[ "$HOST_FTP_SITE" =~ ^ftp:// ]]; then
-                        mkdir -p "$HOST_REF_DIR"
-                        cd $HOST_REF_DIR
-                        wget -c "$HOST_FTP_SITE" -P "$HOST_REF_DIR"
-                        HOST_REF_PATH="$HOST_REF_DIR/$(basename "$HOST_FTP_SITE" .tar.gz)"
-                        tar -xzf "$HOST_REF_PATH/$(basename "$HOST_FTP_SITE")" -C "$HOST_REF_PATH"
-                        DATABASE_PATHS["HOST_REF_PATH"]="$HOST_REF_PATH"
-                        echo "✅ Host reference genome downloaded successfully!"
-                    else
-                        DATABASE_PATHS["HOST_REF_PATH"]=""
-                        echo "⚠️ Invalid FTP site- please download the host's reference genome manually and add its location to configs/parameters.yaml."
-                    fi
-                    break  # Exit outer loop after installation
-                    ;;
-                * ) echo "⚠️ Please enter 'y(es)' or 'n(o)'.";;
-            esac
-        done
-        if [[ "$RETRY" == "i" ]]; then
-            break  # Exit outer loop to install the database
-        fi
+    echo "Downloading $GENOME_NAME reference genome to $GENOME_DIR..."
+    wget -O "$GENOME_DIR/$FILE_NAME.gz" "$DOWNLOAD_URL" || { echo "❌ Failed to download $GENOME_NAME."; return; }
+
+    echo "Extracting genome file..."
+    gunzip "$GENOME_DIR/$FILE_NAME.gz" || { echo "❌ Failed to extract $GENOME_NAME."; return; }
+
+    conda activate camp
+    echo "Building Bowtie2 index in $GENOME_DIR..."
+    bowtie2-build "$GENOME_DIR/$FILE_NAME" "$GENOME_DIR/hg38_index" || { echo "❌ Failed to build index for $GENOME_NAME."; return; }
+    conda deactivate
+    
+    echo "✅ $GENOME_NAME genome downloaded and indexed successfully in $GENOME_DIR!"
+
+    # Save host reference path as a global variable
+    HOST_REFERENCE_PATH="$GENOME_DIR/$INDEX_NAME"
+}
+
+# Ask user for selection
+while true; do
+    echo "Select the reference genome to download and index:"
+    echo "1) Human (hg38)"
+    echo "2) Mouse (GRCm39)"
+    echo "3) Skip"
+
+    read -p "Enter your choice (1/2/3): " choice
+
+    case $choice in
+        1)
+            read -p "Enter the directory where the genome should be installed: " INSTALL_DIR
+            DB_PATH="$INSTALL_DIR/hg38_ref"
+            mkdir -p $DB_PATH
+            HOST_FILTER='True'
+	        break
+            ;;
+        2)
+            read -p "Enter the directory where the genome should be installed: " INSTALL_DIR
+            DB_PATH="$INSTALL_DIR/GRCm39"
+            mkdir -p $DB_PATH
+            HOST_FILTER='True'
+            break
+                ;;
+        3)
+            echo "Skipping download and indexing."
+            read -p "Would you like to provide an alternative path for the database? (y/n): " alt_choice
+            if [[ "$alt_choice" == "y" || "$alt_choice" == "Y" ]]; then
+                read -p "Enter the alternative database path: " HOST_REFERENCE_PATH
+                HOST_FILTER='True'
+            else
+                HOST_REFERENCE_PATH=""
+                HOST_FILTER='False'
+            fi
+            break
+            ;;
+        *)
+            echo "⚠️ Invalid choice! Please enter 1, 2, or 3."
+            ;;
+    esac
+done
+
+case $choice in
+    1)
+        download_and_index "Human (hg38)" \
+            "http://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz" \
+            "hg38.fa" \
+            "hg38_index" \
+            "$DB_PATH"
         ;;
-    [Nn]* )
-        HOST_FILTER="False"
-        DATABASE_PATHS["HOST_REF_PATH"]=""
-        echo "🚫 Skipping host read removal."
+    2)
+        download_and_index "Mouse (GRCm39)" \
+            "http://ftp.ensembl.org/pub/release-108/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz" \
+            "GRCm39.fa" \
+            "mouse_index" \
+            "$DB_PATH"
         ;;
-    * ) echo "⚠️ Please enter 'y(es)' or 'n(o)'.";;
 esac
-
 echo "✅ Database and environment setup complete!"
 
 # --- Generate parameter configs ---
@@ -251,8 +282,6 @@ OTHER_CONSTANT=1000
 # Use existing paths from DATABASE_PATHS
 EXT_PATH="$MODULE_WORK_DIR/workflow/ext"  # Assuming extensions are in workflow/ext
 LOW_QUAL_THRESHOLD=8
-USE_HOST_FILTER="$HOST_FILTER"
-HOST_GENOME_LOCATION="${DATABASE_PATHS[HOST_REF_PATH]}"
 
 # Create test_data/parameters.yaml
 cat <<EOL > "$PARAMS_FILE"
@@ -273,7 +302,7 @@ quality:        '$LOW_QUAL_THRESHOLD'
 # --- filter_host_reads --- #
 
 use_host_filter:    '$HOST_FILTER'
-host_ref_genome:    '$HOST_GENOME_LOCATION'
+host_ref_genome:    '$HOST_REFERENCE_PATH'
 EOL
 
 echo "✅ Test data configuration file created at: $PARAMS_FILE"
@@ -298,7 +327,7 @@ quality:        $LOW_QUAL_THRESHOLD
 # --- filter_host_reads --- #
 
 use_host_filter:    '$HOST_FILTER'
-host_ref_genome:    '$HOST_GENOME_LOCATION'
+host_ref_genome:    '$HOST_REFERENCE_PATH'
 EOL
 
 echo "✅ Default configuration file created at: $PARAMS_FILE"
@@ -318,5 +347,5 @@ EOL
 
 echo "✅ Test data input CSV created at: $INPUT_CSV"
 
-echo "🎯 Setup complete! You can now test the workflow using \`python $MODULE_WORK_DIR/workflow/nanopore-quality-control.py test\`"
+echo "🎯 Setup complete! You can now test the workflow using \`python workflow/nanopore-quality-control.py test\`"
 

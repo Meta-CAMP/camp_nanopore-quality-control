@@ -66,6 +66,8 @@ rule trim_reads:
         join(dirs.OUT, '0_trimmed', '{sample}.fastq.gz')
     log:
         join(dirs.LOG, 'trimming', '{sample}.out')
+    conda:
+        'porechop',
     threads: config['trim_reads_threads']
     resources:
         mem_mb = config['trim_reads_mem_mb']
@@ -85,21 +87,25 @@ rule filter_lowqual_reads:
         join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz')
     log:
         join(dirs.LOG, 'quality_filtering', '{sample}.out')
+    conda:
+        'chopper',
     resources:
         mem_mb = config['filter_lowqual_reads_mem_mb']
     params:
         quality = config['quality']
     shell:
         """
-        gunzip -c {input} | chopper --quality {params.quality} --logfile {log}  | gzip -c - > {output}
+        gunzip -c {input} | chopper --quality {params.quality} | gzip -c - > {output}
         """
 
 
 rule build_minimap2_index:
     output:
-        f"{config['host_ref_genome']}.mmi"
+        config['host_ref_genome'] + ".mmi"
     params:
         reference = config['host_ref_genome']
+    conda:
+        'minimap2',
     shell:
         """
         minimap2 -d {output} \
@@ -110,11 +116,13 @@ rule build_minimap2_index:
 rule filter_host_reads:
     input:
         fastq = join(dirs.OUT, '1_quality_filtered', '{sample}.fastq.gz'),
-        host_genome_index = f"{config['host_genome']}.mmi"
+        host_genome_index = config['host_ref_genome'] + ".mmi"
     output:
         join(dirs.OUT, '2_host_reads_removed', '{sample}.fastq.gz')
     log:
         join(dirs.LOG, 'host_reads_removal', '{sample}.out')
+    conda:
+        'minimap2',
     threads: config['filter_host_reads_threads']
     resources:
         mem_mb = config['filter_host_reads_mem_mb']
@@ -142,6 +150,8 @@ rule fastqc_pre:
     output:
         join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.html'),
         join(dirs.OUT, '3_summary', 'fastqc_pre', '{sample}_fastqc.zip')
+    conda:
+        'fastqc',
     threads:
         config['fastqc_threads']
     params:
@@ -160,6 +170,8 @@ rule fastqc_post:
     output:
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.html'),
         join(dirs.OUT, '3_summary', 'fastqc_post', '{sample}_fastqc.zip')
+    conda:
+        'fastqc',
     threads:
         config['fastqc_threads']
     params:
@@ -221,10 +233,10 @@ rule pre_quality_scores:
     resources:
         mem_mb = config['count_reads_mem_mb']
     params:
-        ext = config['external_scripts']
+        script_dir = dirs_scr
     shell:
         """
-        python3 {params.ext}/quality_scoring.py -i {input} -o {output}
+        python3 {params.script_dir}/quality_scoring.py -i {input} -o {output}
         """
 
 rule post_quality_scores:
@@ -235,10 +247,10 @@ rule post_quality_scores:
     resources:
         mem_mb = config['count_reads_mem_mb']
     params:
-        ext = config['external_scripts']
+        script_dir = dirs_scr
     shell:
         """
-        python3 {params.ext}/quality_scoring.py -i {input} -o {output}
+        python3 {params.script_dir}/quality_scoring.py -i {input} -o {output}
         """
 
 rule sample_statistics:

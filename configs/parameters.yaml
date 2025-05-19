@@ -1,8 +1,8 @@
-#'''Parameters'''#
+#'''Parameters config.'''#
 
 # --- general --- #
 
-ext: ''
+ext:            ''
 conda_prefix:   ''
 
 
@@ -13,5 +13,5 @@ quality:        8
 
 # --- filter_host_reads --- #
 
-use_host_filter: True
-host_genome:    ''
+use_host_filter:    'True'
+host_ref_genome:    ''
